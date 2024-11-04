@@ -21,6 +21,9 @@
     <div class="form-group mb-2">
       <% if (username) { %>
         <span class="navbar-text">Logged in as: <%= username %>!</span>
+        <form class="form-inline" action="/logout" method="POST" style="display: inline;">
+          <button type="submit" class="btn btn-outline-dark">Log Out</button>
+        </form>
       <% } else { %>
         <form class="form-inline" action="/login" method="POST">
           <input

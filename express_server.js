@@ -122,6 +122,12 @@ app.post("/login", (req, res) => {
   res.redirect("/urls");
 });
 
+// Route to handle logout and clear the username cookie
+app.post("/logout", (req, res) => {
+  res.clearCookie("username"); // Clear the username cookie
+  res.redirect("/urls"); // Redirect to /urls for now
+});
+
 // Route to return urlDatabase as JSON
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
