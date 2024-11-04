@@ -1,12 +1,12 @@
 const express = require("express");
+const cookieParser = require("cookie-parser");
 const app = express();
 const PORT = 8080; // default port 8080
 
-// Set EJS as the templating engine
-app.set("view engine", "ejs");
+app.set("view engine", "ejs"); // Set EJS as the templating engine
 
-// Middleware to parse URL-encoded data from POST requests
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true })); // Middleware to parse URL-encoded data from POST requests
+app.use(cookieParser()); // Middleware to parse cookies
 
 // URL database to store short and long URL mappings
 const urlDatabase = {
@@ -33,7 +33,10 @@ app.get("/", (req, res) => {
 
 // Route to display all URLs in the urlDatabase
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { 
+    urls: urlDatabase, 
+    username: req.cookies["username"] // Retrieve the username from the cookie
+  };
   res.render("urls_index", templateVars);
 });
 
@@ -117,11 +120,6 @@ app.post("/login", (req, res) => {
 
   // Redirect back to the main URLs page after login
   res.redirect("/urls");
-});
-
-// Route for a simple HTML greeting
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
 // Route to return urlDatabase as JSON
