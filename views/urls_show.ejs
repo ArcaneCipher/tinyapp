@@ -12,6 +12,9 @@
   </head>
 
   <body>
+    <!-- Include the header -->
+    <%- include('partials/_header') %>
+    
     <div class="card text-center">
       <div class="card-header"></div>
       <div class="card-body">
@@ -20,8 +23,7 @@
           Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
         </p>
       </div>
-      <!-- Link for creating a new shortened URL -->
-      <p><a href="#">Shorten a New URL</a></p>
+
       <div class="card-footer text-muted"></div>
     </div>
     <!-- Bootstrap JS -->
