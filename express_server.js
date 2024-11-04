@@ -39,6 +39,12 @@ app.get("/urls", (req, res) => {
 // Route to handle form submission for creating a new short URL
 app.post("/urls", (req, res) => {
   const longURL = req.body.longURL;  // Get the long URL from the form input
+
+  // Check if longURL is provided; if not, return a 400 error
+  if (!longURL) {
+    return res.status(400).send("Error: Please provide a valid URL.");
+  }
+
   const id = generateRandomString(); // Generate a unique short URL ID
   urlDatabase[id] = longURL;         // Store the long URL with the generated ID
   res.redirect(`/urls/${id}`);       // Redirect to the new short URL's page
