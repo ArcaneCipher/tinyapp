@@ -75,14 +75,17 @@ app.get("/urls/:id", (req, res) => {
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
 
-  urlDatabase[id] = longURL; // Store the long URL with the generated ID
+  // Check if the short URL ID exists in the database
+  if (urlDatabase[id]) {
+    delete urlDatabase[id]; // Remove the URL from the database
+  }
 
   // Redirect back to the main URLs page after deletion
-  res.redirect("/urls/:id");
+  res.redirect("/urls");
 });
 
 // Route to handle URL edit
-app.post("/urls/:id/edit", (req, res) => {
+app.post("/urls/:id", (req, res) => {
   const id = req.params.id;
   const newLongURL = req.body.longURL;
 
