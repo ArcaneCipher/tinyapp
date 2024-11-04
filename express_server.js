@@ -108,6 +108,17 @@ app.get("/u/:id", (req, res) => {
   }
 });
 
+// Route to render login and set a cookie
+app.post("/login", (req, res) => {
+  const username = req.body.username;
+
+  // Set a cookie named 'username' with the provided username
+  res.cookie("username", username);
+
+  // Redirect back to the main URLs page after login
+  res.redirect("/urls");
+});
+
 // Route for a simple HTML greeting
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
