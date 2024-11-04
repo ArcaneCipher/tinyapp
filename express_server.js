@@ -61,6 +61,12 @@ app.get("/urls/:id", (req, res) => {
     id: req.params.id,
     longURL: urlDatabase[req.params.id],
   };
+
+  // Check if the short URL ID exists in urlDatabase; if not, return 404
+  if (!templateVars.longURL) {
+    return res.status(404).send("Error: Short URL not found.");
+  }
+
   res.render("urls_show", templateVars);
 });
 
