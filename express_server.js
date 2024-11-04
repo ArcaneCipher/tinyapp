@@ -2,14 +2,19 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 
+// Set EJS as the templating engine
 app.set("view engine", "ejs");
+
+// Middleware to parse URL-encoded data from POST requests
 app.use(express.urlencoded({ extended: true }));
 
+// URL database to store short and long URL mappings
 const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
 };
 
+// Function to generate a random 6-character alphanumeric string
 function generateRandomString(length = 6) {
   const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let result = "";
@@ -20,33 +25,32 @@ function generateRandomString(length = 6) {
   return result;
 }
 
+// Route for root path - returns a simple greeting
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
 
+// Route to display all URLs in the urlDatabase
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
 
+// Route to handle form submission for creating a new short URL
 app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
-  const longURL = req.body.longURL;
+  const longURL = req.body.longURL;  // Get the long URL from the form input
   const id = generateRandomString(); // Generate a unique short URL ID
-  urlDatabase[id] = longURL; // Store the long URL with the generated ID in urlDatabase
-  console.log(urlDatabase);
-  res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  urlDatabase[id] = longURL;         // Store the long URL with the generated ID
+  res.redirect(`/urls/${id}`);       // Redirect to the new short URL's page
 });
 
+// Route to render form for creating a new short URL
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
+// Route to display a specific short URL and its long URL
 app.get("/urls/:id", (req, res) => {
-  // const templateVars could be simplified as:
-  // const id = req.params.id; // Retrieve the short URL ID
-  // const longURL = urlDatabase[id]; // Retrieve the long URL from the urlDatabase
-  // const templateVars = { id, longURL }; // Pass both id and longURL to the template
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id],
@@ -54,19 +58,27 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+// Route to handle redirection for short URLs
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id];
-  res.redirect(longURL);
+  const longURL = urlDatabase[req.params.id]; // Retrieve the long URL from urlDatabase
+  if (longURL) {
+    res.redirect(longURL);                    // Redirect to the long URL if found
+  } else {
+    res.status(404).send("Short URL not found"); // Send 404 if the short URL doesn't exist
+  }
 });
 
+// Route for a simple HTML greeting
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+// Route to return urlDatabase as JSON
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+// Start the server and listen on specified port
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
