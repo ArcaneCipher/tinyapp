@@ -14,6 +14,21 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com",
 };
 
+// users object
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
+};
+
+
 // Function to generate a random 6-character alphanumeric string
 function generateRandomString(length = 6) {
   const characters =
@@ -24,6 +39,12 @@ function generateRandomString(length = 6) {
     result += characters[randomIndex];
   }
   return result;
+}
+
+// Helper function to get user object from user_id cookie
+function getUserFromCookie(req) {
+  const userId = req.cookies["user_id"];
+  return users[userId];
 }
 
 //// GET ////
@@ -40,27 +61,30 @@ app.get("/urls.json", (req, res) => {
 
 // Route to display all URLs in the urlDatabase
 app.get("/urls", (req, res) => {
+  const user = getUserFromCookie(req); // Retrieve user object using user_id cookie
   const templateVars = { 
     urls: urlDatabase, 
-    username: req.cookies["username"] || null // Retrieve username from the cookie or set null if missing
+    user: user || null // Pass user object or null if not logged in
   };
   res.render("urls_index", templateVars);
 });
 
 // Route to render form for creating a new short URL
 app.get("/urls/new", (req, res) => {
+  const user = getUserFromCookie(req);
   const templateVars = {
-    username: req.cookies["username"] || null // Pass username to render the header correctly
+    user: user || null // Pass user object to render the header correctly
   };
   res.render("urls_new", templateVars);
 });
 
 // Route to display a specific short URL and its long URL
 app.get("/urls/:id", (req, res) => {
+  const user = getUserFromCookie(req);
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id],
-    username: req.cookies["username"] || null // Pass username for header display
+    user: user || null // Pass user object for header display
   };
 
   // Check if the short URL ID exists in urlDatabase; if not, return 404
@@ -83,8 +107,9 @@ app.get("/u/:id", (req, res) => {
 
 // Route to render the registration page
 app.get("/register", (req, res) => {
+  const user = getUserFromCookie(req);
   const templateVars = {
-    username: req.cookies["username"] || null // Pass the username cookie if it exists
+    user: user || null // Pass the username cookie if it exists
   };
   res.render("register", templateVars);
 });
@@ -132,7 +157,7 @@ app.post("/urls/:id", (req, res) => {
   res.redirect("/urls");
 });
 
-// Route to render login and set a cookie
+// Route to render login and set a user_id cookie
 app.post("/login", (req, res) => {
   const username = req.body.username;
 
@@ -143,11 +168,37 @@ app.post("/login", (req, res) => {
   res.redirect("/urls");
 });
 
-// Route to handle logout and clear the username cookie
+// Route to handle logout and clear the user_id cookie
 app.post("/logout", (req, res) => {
-  res.clearCookie("username"); // Clear the username cookie
+  res.clearCookie("user_id"); // Clear the user_id cookie
   res.redirect("/urls"); // Redirect to /urls for now
 });
+
+// Route to handle user registration
+app.post("/register", (req, res) => {
+  const {email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).send("Error: Email and password cannot be blank.");
+  }
+
+  const userID = generateRandomString();
+
+  const newUser = {
+    id: userID,
+    email: email,
+    password: password,
+  };
+
+  users[userID] = newUser;
+
+  res.cookie("user_id", userID);
+
+  console.log("Updated users object:", users);
+
+  res.redirect("/urls");
+});
+
 
 //// LISTEN ////
 
