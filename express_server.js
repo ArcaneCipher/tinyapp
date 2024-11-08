@@ -47,6 +47,17 @@ function getUserFromCookie(req) {
   return users[userId];
 }
 
+// Helper function to find a user by email
+function getUserByEmail(email) {
+  for (const userId in users) {
+    const user = users[userId];
+    if (user.email === email) {
+      return user;
+    }
+  }
+  return null;
+}
+
 //// GET ////
 
 // Route for root path - returns a simple greeting
@@ -178,24 +189,33 @@ app.post("/logout", (req, res) => {
 app.post("/register", (req, res) => {
   const {email, password } = req.body;
 
+  // Check for missing email or password fields
   if (!email || !password) {
     return res.status(400).send("Error: Email and password cannot be blank.");
   }
 
+  // Check if email is already registered
+  if (getUserByEmail(email)) {
+    return res.status(400).send("Error: Email is already registered.");
+  }
+
+  // Generate a unique ID for the new user
   const userID = generateRandomString();
 
+  // Create the new user object
   const newUser = {
     id: userID,
     email: email,
     password: password,
   };
 
+  // Add the new user to the users object
   users[userID] = newUser;
 
+  // Set a cookie with the new user's ID
   res.cookie("user_id", userID);
 
-  console.log("Updated users object:", users);
-
+  // Redirect to /urls
   res.redirect("/urls");
 });
 
