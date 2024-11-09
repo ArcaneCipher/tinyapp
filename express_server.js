@@ -203,7 +203,7 @@ app.post("/login", (req, res) => {
 // Route to handle logout and clear the user_id cookie
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id"); // Clear the user_id cookie
-  res.redirect("/urls"); // Redirect to /urls for now
+  res.redirect("/login"); // Redirect to /urls for now
 });
 
 // Route to handle user registration
