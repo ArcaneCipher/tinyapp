@@ -180,8 +180,13 @@ app.post("/urls/:id", (req, res) => {
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
 
+  // Check if email and password are provided
+  if (!email || !password) {
+    return res.status(400).send("Error: Email and password must be provided.");
+  }
+
   // Find user by email
-  const user = Object.values(users).find((u) => u.email === email);
+  const user = getUserByEmail(email);
 
   // Check if user exists and password matches
   if (!user || user.password !== password) {
