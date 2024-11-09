@@ -28,7 +28,6 @@ const users = {
   },
 };
 
-
 // Function to generate a random 6-character alphanumeric string
 function generateRandomString(length = 6) {
   const characters =
@@ -73,9 +72,9 @@ app.get("/urls.json", (req, res) => {
 // Route to display all URLs in the urlDatabase
 app.get("/urls", (req, res) => {
   const user = getUserFromCookie(req); // Retrieve user object using user_id cookie
-  const templateVars = { 
-    urls: urlDatabase, 
-    user: user || null // Pass user object or null if not logged in
+  const templateVars = {
+    urls: urlDatabase,
+    user: user || null, // Pass user object or null if not logged in
   };
   res.render("urls_index", templateVars);
 });
@@ -84,7 +83,7 @@ app.get("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const user = getUserFromCookie(req);
   const templateVars = {
-    user: user || null // Pass user object to render the header correctly
+    user: user || null, // Pass user object to render the header correctly
   };
   res.render("urls_new", templateVars);
 });
@@ -95,7 +94,7 @@ app.get("/urls/:id", (req, res) => {
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id],
-    user: user || null // Pass user object for header display
+    user: user || null, // Pass user object for header display
   };
 
   // Check if the short URL ID exists in urlDatabase; if not, return 404
@@ -120,9 +119,18 @@ app.get("/u/:id", (req, res) => {
 app.get("/register", (req, res) => {
   const user = getUserFromCookie(req);
   const templateVars = {
-    user: user || null // Pass the username cookie if it exists
+    user: user || null, // Pass the user_id cookie if it exists
   };
   res.render("register", templateVars);
+});
+
+// Route to render the login page
+app.get("/login", (req, res) => {
+  const user = getUserFromCookie(req); // Retrieve user object using user_id cookie
+  const templateVars = {
+    user: user || null, // Pass the user object for header rendering
+  };
+  res.render("login", templateVars); // Render login.ejs
 });
 
 //// POST ////
@@ -170,10 +178,18 @@ app.post("/urls/:id", (req, res) => {
 
 // Route to render login and set a user_id cookie
 app.post("/login", (req, res) => {
-  const username = req.body.username;
+  const { email, password } = req.body;
 
-  // Set a cookie named 'username' with the provided username
-  res.cookie("username", username);
+  // Find user by email
+  const user = Object.values(users).find((u) => u.email === email);
+
+  // Check if user exists and password matches
+  if (!user || user.password !== password) {
+    return res.status(403).send("Error: Invalid email or password.");
+  }
+
+  // Set a cookie with the user's ID
+  res.cookie("user_id", user.id);
 
   // Redirect back to the main URLs page after login
   res.redirect("/urls");
@@ -187,7 +203,7 @@ app.post("/logout", (req, res) => {
 
 // Route to handle user registration
 app.post("/register", (req, res) => {
-  const {email, password } = req.body;
+  const { email, password } = req.body;
 
   // Check for missing email or password fields
   if (!email || !password) {
@@ -218,7 +234,6 @@ app.post("/register", (req, res) => {
   // Redirect to /urls
   res.redirect("/urls");
 });
-
 
 //// LISTEN ////
 
