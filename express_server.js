@@ -19,6 +19,7 @@ const urlDatabase = {
     userID: "userRandomID",
   },
 };
+
 // users object
 const users = {
   userRandomID: {
@@ -32,6 +33,8 @@ const users = {
     password: "dishwasher-funk",
   },
 };
+
+//// FUNCTIONS ////
 
 // Function to generate a random 6-character alphanumeric string
 function generateRandomString(length = 6) {
@@ -48,7 +51,7 @@ function generateRandomString(length = 6) {
 // Helper function to get user object from user_id cookie
 function getUserFromCookie(req) {
   const userId = req.cookies["user_id"];
-  return users[userId];
+  return users[userId] || null; // Explicitly return null if the user_id is not found
 }
 
 // Helper function to find a user by email
@@ -71,6 +74,16 @@ function urlsForUser(userID) {
     }
   }
   return userUrls;
+}
+
+// Helper function: Validate URL
+function isValidURL(url) {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 //// GET ////
@@ -217,8 +230,8 @@ app.post("/urls", (req, res) => {
   const longURL = req.body.longURL; // Get the long URL from the form input
 
   // Check if longURL is provided; if not, return a 400 error
-  if (!longURL) {
-    return res.status(400).send("Error: Please provide a valid URL.");
+  if (!isValidURL(longURL)) {
+    return res.status(400).send("Error: Invalid URL format.");
   }
 
   const id = generateRandomString(); // Generate a unique short URL ID
@@ -228,13 +241,29 @@ app.post("/urls", (req, res) => {
 
 // Route to handle URL edit
 app.post("/urls/:id", (req, res) => {
-  const id = req.params.id;
-  const newLongURL = req.body.longURL;
+  const user = getUserFromCookie(req);
+  const url = urlDatabase[req.params.id];
 
-  // Update the long URL if the short URL ID exists in the database
-  if (urlDatabase[id]) {
-    urlDatabase[id] = newLongURL;
+  // Check if url is in urlDatabase
+  if (!url) {
+    return res.status(404).send("Error: Short URL not found.");
   }
+
+  // Check if user is logged in
+  if (!user || url.userID !== user.id) {
+    return res
+      .status(403)
+      .send("Error: You do not have permission to view this URL.");
+  }
+
+  // Validate the new URL
+  const newLongURL = req.body.longURL;
+  if (!isValidURL(newLongURL)) {
+    return res.status(400).send("Error: Invalid URL format.");
+  }
+
+  // Update the long URL if validation passes
+  url.longURL = newLongURL;
 
   // Redirect back to the main URLs page after the edit
   res.redirect("/urls");
@@ -242,12 +271,23 @@ app.post("/urls/:id", (req, res) => {
 
 // Route to handle URL deletion
 app.post("/urls/:id/delete", (req, res) => {
-  const id = req.params.id;
+  const user = getUserFromCookie(req);
+  const url = urlDatabase[req.params.id];
+
+  // Check if url is in urlDatabase
+  if (!url) {
+    return res.status(404).send("Error: Short URL not found.");
+  }
+
+  // Check if user is logged in
+  if (!user || url.userID !== user.id) {
+    return res
+      .status(403)
+      .send("Error: You do not have permission to view this URL.");
+  }
 
   // Check if the short URL ID exists in the database
-  if (urlDatabase[id]) {
-    delete urlDatabase[id]; // Remove the URL from the database
-  }
+  delete urlDatabase[req.params.id];
 
   // Redirect back to the main URLs page after deletion
   res.redirect("/urls");
