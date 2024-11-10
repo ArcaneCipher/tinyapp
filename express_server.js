@@ -12,11 +12,11 @@ app.use(cookieParser()); // Middleware to parse cookies
 const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",
-    userID: "aJ48lW",
+    userID: "userRandomID",
   },
   i3BoGr: {
     longURL: "https://www.google.ca",
-    userID: "aJ48lW",
+    userID: "userRandomID",
   },
 };
 // users object
@@ -62,11 +62,22 @@ function getUserByEmail(email) {
   return null;
 }
 
+// Helper function: Filter URLs by user ID
+function urlsForUser(userID) {
+  const userUrls = {};
+  for (const id in urlDatabase) {
+    if (urlDatabase[id].userID === userID) {
+      userUrls[id] = urlDatabase[id];
+    }
+  }
+  return userUrls;
+}
+
 //// GET ////
 
 // Route for root path - returns a simple greeting
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  res.send("Welcome to TinyApp!");
 });
 
 // Route to return urlDatabase as JSON (optional)
@@ -77,9 +88,17 @@ app.get("/urls.json", (req, res) => {
 // Route to display all URLs in the urlDatabase
 app.get("/urls", (req, res) => {
   const user = getUserFromCookie(req); // Retrieve user object using user_id cookie
+
+  // Check if user is logged in
+  if (!user) {
+    return res.status(403).send("Error: You must be logged in to view your URLs.");
+  }
+
+  const userUrls = urlsForUser(user.id);
+
   const templateVars = {
-    urls: urlDatabase,
-    user: user || null, // Pass user object or null if not logged in
+    urls: userUrls,
+    user, // Pass user object or null if not logged in
   };
   res.render("urls_index", templateVars);
 });
