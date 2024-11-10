@@ -91,7 +91,9 @@ app.get("/urls", (req, res) => {
 
   // Check if user is logged in
   if (!user) {
-    return res.status(403).send("Error: You must be logged in to view your URLs.");
+    return res
+      .status(403)
+      .send("Error: You must be logged in to view your URLs.");
   }
 
   const userUrls = urlsForUser(user.id);
@@ -121,16 +123,26 @@ app.get("/urls/new", (req, res) => {
 // Route to display a specific short URL and its long URL
 app.get("/urls/:id", (req, res) => {
   const user = getUserFromCookie(req);
-  const templateVars = {
-    id: req.params.id,
-    longURL: urlDatabase[req.params.id],
-    user: user || null, // Pass user object for header display
-  };
+  const url = urlDatabase[req.params.id];
+  const id = req.params.id;
 
-  // Check if the short URL ID exists in urlDatabase; if not, return 404
-  if (!templateVars.longURL) {
+  // Check if url is in urlDatabase
+  if (!url) {
     return res.status(404).send("Error: Short URL not found.");
   }
+
+  // Check if user is logged in
+  if (!user || url.userID !== user.id) {
+    return res
+      .status(403)
+      .send("Error: You do not have permission to view this URL.");
+  }
+
+  const templateVars = {
+    id,
+    url,
+    user,
+  };
 
   res.render("urls_show", templateVars);
 });
@@ -197,7 +209,9 @@ app.post("/urls", (req, res) => {
 
   // If user is logged in
   if (!user) {
-    return res.status(403).send("Error: You must be logged in to create short URLs.");
+    return res
+      .status(403)
+      .send("Error: You must be logged in to create short URLs.");
   }
 
   const longURL = req.body.longURL; // Get the long URL from the form input
@@ -208,21 +222,8 @@ app.post("/urls", (req, res) => {
   }
 
   const id = generateRandomString(); // Generate a unique short URL ID
-  urlDatabase[id] = longURL; // Store the long URL with the generated ID
+  urlDatabase[id] = { longURL, userID: user.id }; // Store the long URL and userID with the generated ID
   res.redirect(`/urls/${id}`); // Redirect to the new short URL's page
-});
-
-// Route to handle URL deletion
-app.post("/urls/:id/delete", (req, res) => {
-  const id = req.params.id;
-
-  // Check if the short URL ID exists in the database
-  if (urlDatabase[id]) {
-    delete urlDatabase[id]; // Remove the URL from the database
-  }
-
-  // Redirect back to the main URLs page after deletion
-  res.redirect("/urls");
 });
 
 // Route to handle URL edit
@@ -236,6 +237,19 @@ app.post("/urls/:id", (req, res) => {
   }
 
   // Redirect back to the main URLs page after the edit
+  res.redirect("/urls");
+});
+
+// Route to handle URL deletion
+app.post("/urls/:id/delete", (req, res) => {
+  const id = req.params.id;
+
+  // Check if the short URL ID exists in the database
+  if (urlDatabase[id]) {
+    delete urlDatabase[id]; // Remove the URL from the database
+  }
+
+  // Redirect back to the main URLs page after deletion
   res.redirect("/urls");
 });
 
