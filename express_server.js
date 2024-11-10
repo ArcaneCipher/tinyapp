@@ -85,6 +85,12 @@ app.get("/urls/new", (req, res) => {
   const templateVars = {
     user: user || null, // Pass user object to render the header correctly
   };
+
+  // If user is logged in, redirect to /login
+  if (!user) {
+    return res.redirect("/login");
+  }
+
   res.render("urls_new", templateVars);
 });
 
@@ -108,11 +114,25 @@ app.get("/urls/:id", (req, res) => {
 // Route to handle redirection for short URLs
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id]; // Retrieve the long URL from urlDatabase
-  if (longURL) {
-    res.redirect(longURL); // Redirect to the long URL if found
-  } else {
-    res.status(404).send("Short URL not found"); // Send 404 if the short URL doesn't exist
+
+  if (!longURL) {
+    // If the ID does not exist in the database, send a simple HTML error message
+    return res.status(404).send(`
+      <html>
+        <head>
+          <title>TinyApp - Error - Short URL Not Found</title>
+        </head>
+        <body>
+          <h1>Error 404: Short URL Not Found</h1>
+          <p>The short URL ID "<strong>${req.params.id}</strong>" does not exist in our database.</p>
+          <a href="/urls">Return to My URLs</a>
+        </body>
+      </html>
+    `);
   }
+
+  // If the ID exists, redirect to the long URL
+  res.redirect(longURL);
 });
 
 // Route to render the registration page
@@ -121,6 +141,12 @@ app.get("/register", (req, res) => {
   const templateVars = {
     user: user || null, // Pass the user_id cookie if it exists
   };
+
+  // If user is logged in, redirect to /urls
+  if (user) {
+    return res.redirect("/urls");
+  }
+
   res.render("register", templateVars);
 });
 
@@ -130,6 +156,12 @@ app.get("/login", (req, res) => {
   const templateVars = {
     user: user || null, // Pass the user object for header rendering
   };
+
+  // If user is logged in, redirect to /urls
+  if (user) {
+    return res.redirect("/urls");
+  }
+
   res.render("login", templateVars); // Render login.ejs
 });
 
@@ -137,6 +169,13 @@ app.get("/login", (req, res) => {
 
 // Route to handle form submission for creating a new short URL
 app.post("/urls", (req, res) => {
+  const user = getUserFromCookie(req); // Retrieve user object using user_id cookie
+
+  // If user is logged in
+  if (!user) {
+    return res.status(403).send("Error: You must be logged in to create short URLs.");
+  }
+
   const longURL = req.body.longURL; // Get the long URL from the form input
 
   // Check if longURL is provided; if not, return a 400 error
