@@ -92,11 +92,10 @@ function isValidURL(url) {
 app.get("/", (req, res) => {
   const user = getUserFromCookie(req);
 
-  // If user is logged in, redirect to /urls
-  if (!user) {
-    return res.redirect("/login");
+  if (user) {
+    return res.redirect("/urls"); // If user is logged in, redirect to /urls
   }
-  return res.redirect("/urls");
+  return res.redirect("/login"); // If user is not logged in, redirect to /login
 });
 
 // Route to return urlDatabase as JSON (optional)
@@ -119,7 +118,7 @@ app.get("/urls", (req, res) => {
 
   const templateVars = {
     urls: userUrls,
-    user, // Pass user object or null if not logged in
+    user,
   };
   res.render("urls_index", templateVars);
 });
@@ -128,7 +127,7 @@ app.get("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const user = getUserFromCookie(req);
   const templateVars = {
-    user: user || null, // Pass user object to render the header correctly
+    user,
   };
 
   // If user is not logged in, redirect to /login
@@ -168,7 +167,7 @@ app.get("/urls/:id", (req, res) => {
 
 // Route to handle redirection for short URLs
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id]; // Retrieve the long URL from urlDatabase
+  const longURL = urlDatabase[req.params.id].longURL; // Retrieve the long URL from urlDatabase
 
   if (!longURL) {
     // If the ID does not exist in the database, send a simple HTML error message
@@ -194,7 +193,7 @@ app.get("/u/:id", (req, res) => {
 app.get("/register", (req, res) => {
   const user = getUserFromCookie(req);
   const templateVars = {
-    user: user || null, // Pass the user_id cookie if it exists
+    user,
   };
 
   // If user is logged in, redirect to /urls
