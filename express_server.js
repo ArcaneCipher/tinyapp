@@ -37,25 +37,25 @@ const users = {
 //// FUNCTIONS ////
 
 // Function to generate a random 6-character alphanumeric string
-function generateRandomString(length = 6) {
+const generateRandomString = function () {
   const characters =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let result = "";
-  for (let i = 0; i < length; i++) {
+  for (let i = 0; i < 6; i++) {
     const randomIndex = Math.floor(Math.random() * 62);
     result += characters[randomIndex];
   }
   return result;
-}
+};
 
 // Helper function to get user object from user_id cookie
-function getUserFromCookie(req) {
+const getUserFromCookie = function (req) {
   const userId = req.cookies["user_id"];
   return users[userId] || null; // Explicitly return null if the user_id is not found
-}
+};
 
 // Helper function to find a user by email
-function getUserByEmail(email) {
+const getUserByEmail = function (email) {
   for (const userId in users) {
     const user = users[userId];
     if (user.email === email) {
@@ -63,10 +63,10 @@ function getUserByEmail(email) {
     }
   }
   return null;
-}
+};
 
 // Helper function: Filter URLs by user ID
-function urlsForUser(userID) {
+const urlsForUser = function (userID) {
   const userUrls = {};
   for (const id in urlDatabase) {
     if (urlDatabase[id].userID === userID) {
@@ -74,17 +74,17 @@ function urlsForUser(userID) {
     }
   }
   return userUrls;
-}
+};
 
 // Helper function: Validate URL
-function isValidURL(url) {
+const isValidURL = function (url) {
   try {
     new URL(url);
     return true;
-  } catch {
+  } catch (e) {
     return false;
   }
-}
+};
 
 //// GET ////
 
@@ -109,9 +109,12 @@ app.get("/urls", (req, res) => {
 
   // Check if user is logged in
   if (!user) {
-    return res
-      .status(403)
-      .send("Error: You must be logged in to view your URLs.");
+    return res.status(403).render("error", {
+      errorCode: 403,
+      message: "You must be logged in to view your URLs.",
+      returnUrl: "/login",
+      user,
+    });
   }
 
   const userUrls = urlsForUser(user.id);
@@ -146,14 +149,22 @@ app.get("/urls/:id", (req, res) => {
 
   // Check if url is in urlDatabase
   if (!url) {
-    return res.status(404).send("Error: Short URL not found.");
+    return res.status(404).render("error", {
+      errorCode: 404,
+      message: "Short URL not found.",
+      returnUrl: "/urls",
+      user,
+    });
   }
 
-  // Check if user is logged in
+  // Check if user is logged in and owns the URL
   if (!user || url.userID !== user.id) {
-    return res
-      .status(403)
-      .send("Error: You do not have permission to view this URL.");
+    return res.status(403).render("error", {
+      errorCode: 403,
+      message: "You do not have permission to view this URL.",
+      returnUrl: "/login",
+      user,
+    });
   }
 
   const templateVars = {
@@ -167,22 +178,17 @@ app.get("/urls/:id", (req, res) => {
 
 // Route to handle redirection for short URLs
 app.get("/u/:id", (req, res) => {
+  const user = getUserFromCookie(req);
   const longURL = urlDatabase[req.params.id].longURL; // Retrieve the long URL from urlDatabase
 
+  // Check if url is in urlDatabase
   if (!longURL) {
-    // If the ID does not exist in the database, send a simple HTML error message
-    return res.status(404).send(`
-      <html>
-        <head>
-          <title>TinyApp - Error - Short URL Not Found</title>
-        </head>
-        <body>
-          <h1>Error 404: Short URL Not Found</h1>
-          <p>The short URL ID "<strong>${req.params.id}</strong>" does not exist in our database.</p>
-          <a href="/urls">Return to My URLs</a>
-        </body>
-      </html>
-    `);
+    return res.status(404).render("error", {
+      errorCode: 404,
+      message: "Short URL not found.",
+      returnUrl: "/urls",
+      user,
+    });
   }
 
   // If the ID exists, redirect to the long URL
@@ -192,14 +198,15 @@ app.get("/u/:id", (req, res) => {
 // Route to render the registration page
 app.get("/register", (req, res) => {
   const user = getUserFromCookie(req);
-  const templateVars = {
-    user,
-  };
 
   // If user is logged in, redirect to /urls
   if (user) {
     return res.redirect("/urls");
   }
+
+  const templateVars = {
+    user,
+  };
 
   res.render("register", templateVars);
 });
@@ -207,14 +214,15 @@ app.get("/register", (req, res) => {
 // Route to render the login page
 app.get("/login", (req, res) => {
   const user = getUserFromCookie(req); // Retrieve user object using user_id cookie
-  const templateVars = {
-    user: user || null, // Pass the user object for header rendering
-  };
 
   // If user is logged in, redirect to /urls
   if (user) {
     return res.redirect("/urls");
   }
+
+  const templateVars = {
+    user,
+  };
 
   res.render("login", templateVars); // Render login.ejs
 });
@@ -227,16 +235,23 @@ app.post("/urls", (req, res) => {
 
   // If user is logged in
   if (!user) {
-    return res
-      .status(403)
-      .send("Error: You must be logged in to create short URLs.");
+    return res.status(403).render("error", {
+      errorCode: 403,
+      message: "You must be logged in to create short URLs.",
+      returnUrl: "/login",
+      user,
+    });
   }
 
   const longURL = req.body.longURL; // Get the long URL from the form input
 
-  // Check if longURL is provided; if not, return a 400 error
   if (!isValidURL(longURL)) {
-    return res.status(400).send("Error: Invalid URL format.");
+    return res.status(400).render("error", {
+      errorCode: 400,
+      message: "Invalid URL format. Please provide a valid URL.",
+      returnUrl: "/urls",
+      user,
+    });
   }
 
   const id = generateRandomString(); // Generate a unique short URL ID
@@ -251,20 +266,33 @@ app.post("/urls/:id", (req, res) => {
 
   // Check if url is in urlDatabase
   if (!url) {
-    return res.status(404).send("Error: Short URL not found.");
+    return res.status(404).render("error", {
+      errorCode: 404,
+      message: "Short URL not found.",
+      returnUrl: "/urls",
+      user,
+    });
   }
 
   // Check if user is logged in
   if (!user || url.userID !== user.id) {
-    return res
-      .status(403)
-      .send("Error: You do not have permission to view this URL.");
+    return res.status(403).render("error", {
+      errorCode: 403,
+      message: "You do not have permission to view this URL.",
+      returnUrl: "/login",
+      user,
+    });
   }
 
   // Validate the new URL
   const newLongURL = req.body.longURL;
   if (!isValidURL(newLongURL)) {
-    return res.status(400).send("Error: Invalid URL format.");
+    return res.status(400).render("error", {
+      errorCode: 400,
+      message: "Invalid URL format. Please provide a valid URL.",
+      returnUrl: "/urls",
+      user,
+    });
   }
 
   // Update the long URL if validation passes
@@ -281,14 +309,22 @@ app.post("/urls/:id/delete", (req, res) => {
 
   // Check if url is in urlDatabase
   if (!url) {
-    return res.status(404).send("Error: Short URL not found.");
+    return res.status(404).render("error", {
+      errorCode: 404,
+      message: "Short URL not found.",
+      returnUrl: "/urls",
+      user,
+    });
   }
 
   // Check if user is logged in
   if (!user || url.userID !== user.id) {
-    return res
-      .status(403)
-      .send("Error: You do not have permission to view this URL.");
+    return res.status(403).render("error", {
+      errorCode: 403,
+      message: "You do not have permission to delete this URL.",
+      returnUrl: "/login",
+      user,
+    });
   }
 
   // Check if the short URL ID exists in the database
@@ -300,11 +336,23 @@ app.post("/urls/:id/delete", (req, res) => {
 
 // Route to render login and set a user_id cookie
 app.post("/login", (req, res) => {
+  const verifyLogin = getUserFromCookie(req);
+
+  // If user is logged in, redirect to /urls
+  if (verifyLogin) {
+    return res.redirect("/urls");
+  }
+
   const { email, password } = req.body;
 
   // Check if email and password are provided
   if (!email || !password) {
-    return res.status(400).send("Error: Email and password must be provided.");
+    return res.status(400).render("error", {
+      errorCode: 400,
+      message: "Email and password must be provided.",
+      returnUrl: "/login",
+      user,
+    });
   }
 
   // Find user by email
@@ -312,7 +360,12 @@ app.post("/login", (req, res) => {
 
   // Check if user exists and password matches
   if (!user || user.password !== password) {
-    return res.status(403).send("Error: Invalid email or password.");
+    return res.status(403).render("error", {
+      errorCode: 403,
+      message: "Invalid email or password.",
+      returnUrl: "/login",
+      user,
+    });
   }
 
   // Set a cookie with the user's ID
@@ -330,16 +383,33 @@ app.post("/logout", (req, res) => {
 
 // Route to handle user registration
 app.post("/register", (req, res) => {
+  const user = getUserFromCookie(req);
+
+  // If user is logged in, redirect to /urls
+  if (user) {
+    return res.redirect("/urls");
+  }
+
   const { email, password } = req.body;
 
   // Check for missing email or password fields
   if (!email || !password) {
-    return res.status(400).send("Error: Email and password cannot be blank.");
+    return res.status(400).render("error", {
+      errorCode: 400,
+      message: "Email and password cannot be blank.",
+      returnUrl: "/register",
+      user,
+    });
   }
 
   // Check if email is already registered
   if (getUserByEmail(email)) {
-    return res.status(400).send("Error: Email is already registered.");
+    return res.status(400).render("error", {
+      errorCode: 400,
+      message: "Email is already registered.",
+      returnUrl: "/register",
+      user,
+    });
   }
 
   // Generate a unique ID for the new user
