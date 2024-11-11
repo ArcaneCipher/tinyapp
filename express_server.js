@@ -90,7 +90,13 @@ function isValidURL(url) {
 
 // Route for root path - returns a simple greeting
 app.get("/", (req, res) => {
-  res.send("Welcome to TinyApp!");
+  const user = getUserFromCookie(req);
+
+  // If user is logged in, redirect to /urls
+  if (!user) {
+    return res.redirect("/login");
+  }
+  return res.redirect("/urls");
 });
 
 // Route to return urlDatabase as JSON (optional)
@@ -125,7 +131,7 @@ app.get("/urls/new", (req, res) => {
     user: user || null, // Pass user object to render the header correctly
   };
 
-  // If user is logged in, redirect to /login
+  // If user is not logged in, redirect to /login
   if (!user) {
     return res.redirect("/login");
   }

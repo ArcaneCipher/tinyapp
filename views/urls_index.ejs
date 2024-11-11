@@ -22,20 +22,21 @@
 
     <main style="margin: 1em">
       <h3>My URLs</h3>
-      <% if (Object.keys(urls).length === 0) { %>
-        <p>You have no URLs. Create one now!</p>
-        <a href="/urls/new" class="btn btn-primary">Create New URL</a>
-      <% } else { %>
-        <table class="table">
-          <thead>
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Short URL ID</th>
+            <th scope="col">Long URL</th>
+            <th scope="col">Edit</th>
+            <th scope="col">Delete</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (Object.keys(urls).length === 0) { %>
             <tr>
-              <th scope="col">Short URL ID</th>
-              <th scope="col">Long URL</th>
-              <th scope="col">Edit</th>
-              <th scope="col">Delete</th>
+              <td colspan="4" class="text-center">No URLs available.</td>
             </tr>
-          </thead>
-          <tbody>
+          <% } else { %>
             <% for (let id in urls) { %>
             <tr>
               <td><%= id %></td>
@@ -54,8 +55,14 @@
               </td>
             </tr>
             <% } %>
-          </tbody>
-        </table>
+          <% } %>
+        </tbody>
+      </table>
+
+      <!-- Create New URL Message and Button -->
+      <% if (Object.keys(urls).length === 0) { %>
+        <p>You have no URLs. Create one now!</p>
+        <a href="/urls/new" class="btn btn-primary">Create New URL</a>
       <% } %>
     </main>
     
@@ -67,7 +74,7 @@
     ></script>
     <script
       src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
-      integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+      integrity="sha384-UO2eT0CpHqdSJQ6HJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
       crossorigin="anonymous"
     ></script>
     <script
