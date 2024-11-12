@@ -1,14 +1,32 @@
 const express = require("express");
-const cookieParser = require("cookie-parser");
+const cookieSession = require("cookie-session");
 const bcrypt = require("bcrypt");
 const app = express();
 const PORT = 8080; // default port 8080
 const SALT_ROUNDS = 10; // bcrypt salt rounds as a constant
 
-app.set("view engine", "ejs"); // Set EJS as the templating engine
+// Set EJS as the templating engine
+app.set("view engine", "ejs");
 
-app.use(express.urlencoded({ extended: true })); // Middleware to parse URL-encoded data from POST requests
-app.use(cookieParser()); // Middleware to parse cookies
+// Middleware to parse URL-encoded data from POST requests
+app.use(express.urlencoded({ extended: true }));
+
+// Middleware to encrypt and manage cookies
+app.use(
+  cookieSession({
+    name: "session",
+    keys: [
+      "899bec41a247a9a5ed31af777b24b4ab0706a57a4ed810351a1a2217a199a870",
+      "58ccc40fd5b9e0648a90037c188eccd6233826dcfc27d934e9868f4734bcbe92",
+      "696af373891891d9ecb1b0fbd0cc8fba4ed41484f2e7383dd9731c8963723312",
+      "934ed97c8379b188615e085c5b5dc8f8f82498f7039891c6ffccfdc27b3e53ea",
+      "14b68a7740c097fd444eaf8f08e18dd954299a6d6f7bb58c1253a3c71f60268d",
+    ],
+
+    // Cookie Options
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+  })
+);
 
 // URL database to store short and long URL mappings
 const urlDatabase = {
@@ -61,7 +79,7 @@ const generateRandomString = function () {
 
 // Helper function to get user object from user_id cookie
 const getUserFromCookie = function (req) {
-  const userId = req.cookies["user_id"];
+  const userId = req.session.user_id;
   return users[userId] || null; // Explicitly return null if the user_id is not found
 };
 
@@ -116,7 +134,7 @@ app.get("/urls.json", (req, res) => {
 
 // Route to display all URLs in the urlDatabase
 app.get("/urls", (req, res) => {
-  const user = getUserFromCookie(req); // Retrieve user object using user_id cookie
+  const user = getUserFromCookie(req);
 
   // Check if user is logged in
   if (!user) {
@@ -190,7 +208,7 @@ app.get("/urls/:id", (req, res) => {
 // Route to handle redirection for short URLs
 app.get("/u/:id", (req, res) => {
   const user = getUserFromCookie(req);
-  const longURL = urlDatabase[req.params.id].longURL; // Retrieve the long URL from urlDatabase
+  const longURL = urlDatabase[req.params.id]; // Retrieve the long URL from urlDatabase
 
   // Check if url is in urlDatabase
   if (!longURL) {
@@ -224,7 +242,7 @@ app.get("/register", (req, res) => {
 
 // Route to render the login page
 app.get("/login", (req, res) => {
-  const user = getUserFromCookie(req); // Retrieve user object using user_id cookie
+  const user = getUserFromCookie(req);
 
   // If user is logged in, redirect to /urls
   if (user) {
@@ -242,7 +260,7 @@ app.get("/login", (req, res) => {
 
 // Route to handle form submission for creating a new short URL
 app.post("/urls", (req, res) => {
-  const user = getUserFromCookie(req); // Retrieve user object using user_id cookie
+  const user = getUserFromCookie(req);
 
   // If user is logged in
   if (!user) {
@@ -380,7 +398,7 @@ app.post("/login", (req, res) => {
   }
 
   // Set a cookie with the user's ID
-  res.cookie("user_id", user.id);
+  req.session.user_id = user.id;
 
   // Redirect back to the main URLs page after login
   res.redirect("/urls");
@@ -388,7 +406,7 @@ app.post("/login", (req, res) => {
 
 // Route to handle logout and clear the user_id cookie
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id"); // Clear the user_id cookie
+  req.session = null; // Clear the user_id cookie
   res.redirect("/login"); // Redirect to /urls for now
 });
 
@@ -450,7 +468,7 @@ app.post("/register", (req, res) => {
   users[userID] = newUser;
 
   // Set a cookie with the new user's ID
-  res.cookie("user_id", userID);
+  req.session.user_id = userID;
 
   // Redirect to /urls
   res.redirect("/urls");
