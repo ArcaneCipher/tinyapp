@@ -1,4 +1,5 @@
 const express = require("express");
+const methodOverride = require('method-override')
 const cookieSession = require("cookie-session");
 const bcrypt = require("bcrypt");
 const app = express();
@@ -20,6 +21,9 @@ app.set("view engine", "ejs");
 
 // Middleware to parse URL-encoded data from POST requests
 app.use(express.urlencoded({ extended: true }));
+
+// Middleware to enable support for PUT and DELETE methods
+app.use(methodOverride('_method'));
 
 // Middleware to encrypt and manage cookies
 app.use(
@@ -233,8 +237,8 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${id}`); // Redirect to the new short URL's page
 });
 
-// Route to handle URL edit
-app.post("/urls/:id", (req, res) => {
+// Route to handle URL edit (PUT)
+app.put("/urls/:id", (req, res) => {
   const user = getUserFromCookie(req, users);
   const url = urlDatabase[req.params.id];
 
@@ -273,8 +277,8 @@ app.post("/urls/:id", (req, res) => {
   res.redirect("/urls");
 });
 
-// Route to handle URL deletion
-app.post("/urls/:id/delete", (req, res) => {
+// Route to handle URL deletion (DELETE)
+app.delete("/urls/:id", (req, res) => {
   const user = getUserFromCookie(req, users);
   const url = urlDatabase[req.params.id];
 
