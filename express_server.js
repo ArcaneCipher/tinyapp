@@ -47,10 +47,12 @@ const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",
     userID: "userRandomID",
+    visitCount: 0,
   },
   i3BoGr: {
     longURL: "https://www.google.ca",
     userID: "userRandomID",
+    visitCount: 0,
   },
 };
 
@@ -165,10 +167,9 @@ app.get("/u/:id", (req, res) => {
     return renderError(res, 404, "Short URL not found.", "/urls", user);
   }
 
-  const longURL = urlEntry.longURL; // Extract the long URL
-
-  // If the ID exists, redirect to the long URL
-  res.redirect(longURL);
+  urlEntry.visitCount += 1; // Increment visit count
+  
+  res.redirect(urlEntry.longURL); // If the ID exists, redirect to the long URL
 });
 
 // Route to render the registration page
@@ -233,7 +234,12 @@ app.post("/urls", (req, res) => {
   }
 
   const id = generateRandomString(urlDatabase); // Generate a unique short URL ID
-  urlDatabase[id] = { longURL, userID: user.id }; // Store the long URL and userID with the generated ID
+  // Store the long URL and userID with the generated ID
+  urlDatabase[id] = { 
+    longURL,
+    userID: user.id,
+    visitCount: 0,
+  }; 
   res.redirect(`/urls/${id}`); // Redirect to the new short URL's page
 });
 
