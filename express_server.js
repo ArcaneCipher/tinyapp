@@ -9,8 +9,10 @@ const SALT_ROUNDS = 10; // bcrypt salt rounds as a constant
 const {
   generateRandomString,
   getUserByEmail,
+  getUserFromCookie,
   isValidURL,
   renderError,
+  urlsForUser,
 } = require("./helpers");
 
 // Set EJS as the templating engine
@@ -62,29 +64,11 @@ const users = {
   },
 };
 
-//// FUNCTIONS ////
-// Helper function to get user object from user_id cookie
-const getUserFromCookie = function (req) {
-  const userId = req.session.user_id;
-  return users[userId] || null; // Explicitly return null if the user_id is not found
-};
-
-// Helper function: Filter URLs by user ID
-const urlsForUser = function (userID) {
-  const userUrls = {};
-  for (const id in urlDatabase) {
-    if (urlDatabase[id].userID === userID) {
-      userUrls[id] = urlDatabase[id];
-    }
-  }
-  return userUrls;
-};
-
 //// GET ////
 
 // Route for root path - returns a simple greeting
 app.get("/", (req, res) => {
-  const user = getUserFromCookie(req);
+  const user = getUserFromCookie(req, users);
 
   if (user) {
     return res.redirect("/urls"); // If user is logged in, redirect to /urls
@@ -99,7 +83,7 @@ app.get("/urls.json", (req, res) => {
 
 // Route to display all URLs in the urlDatabase
 app.get("/urls", (req, res) => {
-  const user = getUserFromCookie(req);
+  const user = getUserFromCookie(req, users);
 
   // Check if user is logged in
   if (!user) {
@@ -112,7 +96,7 @@ app.get("/urls", (req, res) => {
     );
   }
 
-  const userUrls = urlsForUser(user.id);
+  const userUrls = urlsForUser(user.id, urlDatabase);
 
   const templateVars = {
     urls: userUrls,
@@ -123,7 +107,7 @@ app.get("/urls", (req, res) => {
 
 // Route to render form for creating a new short URL
 app.get("/urls/new", (req, res) => {
-  const user = getUserFromCookie(req);
+  const user = getUserFromCookie(req, users);
   const templateVars = {
     user,
   };
@@ -138,7 +122,7 @@ app.get("/urls/new", (req, res) => {
 
 // Route to display a specific short URL and its long URL
 app.get("/urls/:id", (req, res) => {
-  const user = getUserFromCookie(req);
+  const user = getUserFromCookie(req, users);
   const url = urlDatabase[req.params.id];
   const id = req.params.id;
 
@@ -169,7 +153,7 @@ app.get("/urls/:id", (req, res) => {
 
 // Route to handle redirection for short URLs
 app.get("/u/:id", (req, res) => {
-  const user = getUserFromCookie(req);
+  const user = getUserFromCookie(req, users);
   const urlEntry = urlDatabase[req.params.id]; // Retrieve the long URL from urlDatabase
 
   // Check if url is in urlDatabase
@@ -185,7 +169,7 @@ app.get("/u/:id", (req, res) => {
 
 // Route to render the registration page
 app.get("/register", (req, res) => {
-  const user = getUserFromCookie(req);
+  const user = getUserFromCookie(req, users);
 
   // If user is logged in, redirect to /urls
   if (user) {
@@ -201,7 +185,7 @@ app.get("/register", (req, res) => {
 
 // Route to render the login page
 app.get("/login", (req, res) => {
-  const user = getUserFromCookie(req);
+  const user = getUserFromCookie(req, users);
 
   // If user is logged in, redirect to /urls
   if (user) {
@@ -219,7 +203,7 @@ app.get("/login", (req, res) => {
 
 // Route to handle form submission for creating a new short URL
 app.post("/urls", (req, res) => {
-  const user = getUserFromCookie(req);
+  const user = getUserFromCookie(req, users);
 
   // If user is logged in
   if (!user) {
@@ -251,7 +235,7 @@ app.post("/urls", (req, res) => {
 
 // Route to handle URL edit
 app.post("/urls/:id", (req, res) => {
-  const user = getUserFromCookie(req);
+  const user = getUserFromCookie(req, users);
   const url = urlDatabase[req.params.id];
 
   // Check if url is in urlDatabase
@@ -291,7 +275,7 @@ app.post("/urls/:id", (req, res) => {
 
 // Route to handle URL deletion
 app.post("/urls/:id/delete", (req, res) => {
-  const user = getUserFromCookie(req);
+  const user = getUserFromCookie(req, users);
   const url = urlDatabase[req.params.id];
 
   // Check if url is in urlDatabase
@@ -319,7 +303,7 @@ app.post("/urls/:id/delete", (req, res) => {
 
 // Route to render login and set a user_id cookie
 app.post("/login", (req, res) => {
-  const verifyLogin = getUserFromCookie(req);
+  const verifyLogin = getUserFromCookie(req, users);
 
   // If user is logged in, redirect to /urls
   if (verifyLogin) {
@@ -362,7 +346,7 @@ app.post("/logout", (req, res) => {
 
 // Route to handle user registration
 app.post("/register", (req, res) => {
-  const user = getUserFromCookie(req);
+  const user = getUserFromCookie(req, users);
 
   // If user is logged in, redirect to /urls
   if (user) {
