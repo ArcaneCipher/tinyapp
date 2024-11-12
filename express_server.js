@@ -177,7 +177,7 @@ app.get("/u/:id", (req, res) => {
   // Assign a visitorID to the session if not already set
   if (!req.session.visitor_id) {
     req.session.visitor_id = generateRandomString(urlEntry.uniqueVisitors);
-  }  
+  }
 
   const visitorID = req.session.visitor_id;
 

@@ -33,39 +33,53 @@
         </thead>
         <tbody>
           <% if (Object.keys(urls).length === 0) { %>
-            <tr>
-              <td colspan="4" class="text-center">No URLs available.</td>
-            </tr>
-          <% } else { %>
-            <% for (let id in urls) { %>
-            <tr>
-              <td><%= id %></td>
-              <td><a href="<%= urls[id].longURL %>" target="_blank"><%= urls[id].longURL %></a></td>
-              <td>
-                <!-- Edit button form -->
-                <form method="GET" action="/urls/<%= id %>" style="display: inline;">
-                  <button type="submit" class="btn btn-outline-primary">Edit</button>
-                </form>
-              </td>
-              <td>
-                <!-- Delete button form -->
-                <form method="POST" action="/urls/<%= id %>?_method=DELETE" style="display: inline;">
-                  <button type="submit" class="btn btn-outline-danger">Delete</button>
-                </form>
-              </td>
-            </tr>
-            <% } %>
-          <% } %>
+          <tr>
+            <td colspan="4" class="text-center">No URLs available.</td>
+          </tr>
+          <% } else { %> <% for (let id in urls) { %>
+          <tr>
+            <td><%= id %></td>
+            <td>
+              <a href="<%= urls[id].longURL %>" target="_blank"
+                ><%= urls[id].longURL %></a
+              >
+            </td>
+            <td>
+              <!-- Edit button form -->
+              <form
+                method="GET"
+                action="/urls/<%= id %>"
+                style="display: inline"
+              >
+                <button type="submit" class="btn btn-outline-primary">
+                  Edit
+                </button>
+              </form>
+            </td>
+            <td>
+              <!-- Delete button form -->
+              <form
+                method="POST"
+                action="/urls/<%= id %>?_method=DELETE"
+                style="display: inline"
+              >
+                <button type="submit" class="btn btn-outline-danger">
+                  Delete
+                </button>
+              </form>
+            </td>
+          </tr>
+          <% } %> <% } %>
         </tbody>
       </table>
 
       <!-- Create New URL Message and Button -->
       <% if (Object.keys(urls).length === 0) { %>
-        <p>You have no URLs. Create one now!</p>
-        <a href="/urls/new" class="btn btn-primary">Create New URL</a>
+      <p>You have no URLs. Create one now!</p>
+      <a href="/urls/new" class="btn btn-primary">Create New URL</a>
       <% } %>
     </main>
-    
+
     <!-- Bootstrap JS -->
     <script
       src="https://code.jquery.com/jquery-3.3.1.slim.min.js"

@@ -20,15 +20,13 @@
     <!-- Include the header -->
     <%- include('partials/_header') %>
 
-    <main style="margin: 2em;">
+    <main style="margin: 2em">
       <div class="container text-center">
         <div class="alert alert-danger" role="alert">
           <h1 class="display-4">Error <%= errorCode %></h1>
           <p class="lead"><%= message %></p>
         </div>
-        <a href="<%= returnUrl %>" class="btn btn-primary">
-          Return
-        </a>
+        <a href="<%= returnUrl %>" class="btn btn-primary"> Return </a>
       </div>
     </main>
 

@@ -26,13 +26,15 @@
             Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
           </p>
           <p><strong>Total Visits:</strong> <%= url.visitCount || 0 %></p>
-          <p><strong>Unique Visitors:</strong> <%= url.uniqueVisitors.size %></p>
+          <p>
+            <strong>Unique Visitors:</strong> <%= url.uniqueVisitors.size %>
+          </p>
           <h4>Visit Log</h4>
           <ul class="list-group">
             <% url.visitLog.forEach(log => { %>
-              <li class="list-group-item">
-                Visitor: <%= log.visitorID %>, Time: <%= log.timestamp %>
-              </li>
+            <li class="list-group-item">
+              Visitor: <%= log.visitorID %>, Time: <%= log.timestamp %>
+            </li>
             <% }) %>
           </ul>
         </div>
