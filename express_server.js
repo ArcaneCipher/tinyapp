@@ -7,7 +7,10 @@ const SALT_ROUNDS = 10; // bcrypt salt rounds as a constant
 
 // Import helper functions
 const {
+  generateRandomString,
   getUserByEmail,
+  isValidURL,
+  renderError,
 } = require("./helpers");
 
 // Set EJS as the templating engine
@@ -60,19 +63,6 @@ const users = {
 };
 
 //// FUNCTIONS ////
-
-// Function to generate a random 6-character alphanumeric string
-const generateRandomString = function () {
-  const characters =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let result = "";
-  for (let i = 0; i < 6; i++) {
-    const randomIndex = Math.floor(Math.random() * 62);
-    result += characters[randomIndex];
-  }
-  return result;
-};
-
 // Helper function to get user object from user_id cookie
 const getUserFromCookie = function (req) {
   const userId = req.session.user_id;
@@ -88,26 +78,6 @@ const urlsForUser = function (userID) {
     }
   }
   return userUrls;
-};
-
-// Helper function: Validate URL
-const isValidURL = function (url) {
-  try {
-    new URL(url);
-    return true;
-  } catch (e) {
-    return false;
-  }
-};
-
-// Helper function to render error pages
-const renderError = (res, errorCode, message, returnUrl, user) => {
-  res.status(errorCode).render("error", {
-    errorCode,
-    message,
-    returnUrl,
-    user,
-  });
 };
 
 //// GET ////
@@ -133,7 +103,13 @@ app.get("/urls", (req, res) => {
 
   // Check if user is logged in
   if (!user) {
-    return renderError(res, 403, "You must be logged in to view your URLs.", "/login", user);
+    return renderError(
+      res,
+      403,
+      "You must be logged in to view your URLs.",
+      "/login",
+      user
+    );
   }
 
   const userUrls = urlsForUser(user.id);
@@ -173,7 +149,13 @@ app.get("/urls/:id", (req, res) => {
 
   // Check if user is logged in and owns the URL
   if (!user || url.userID !== user.id) {
-    return renderError(res, 403, "You do not have permission to view this URL.", "/login", user);
+    return renderError(
+      res,
+      403,
+      "You do not have permission to view this URL.",
+      "/login",
+      user
+    );
   }
 
   const templateVars = {
@@ -188,10 +170,10 @@ app.get("/urls/:id", (req, res) => {
 // Route to handle redirection for short URLs
 app.get("/u/:id", (req, res) => {
   const user = getUserFromCookie(req);
-  const urlEntry  = urlDatabase[req.params.id]; // Retrieve the long URL from urlDatabase
+  const urlEntry = urlDatabase[req.params.id]; // Retrieve the long URL from urlDatabase
 
   // Check if url is in urlDatabase
-  if (!urlEntry ) {
+  if (!urlEntry) {
     return renderError(res, 404, "Short URL not found.", "/urls", user);
   }
 
@@ -241,16 +223,28 @@ app.post("/urls", (req, res) => {
 
   // If user is logged in
   if (!user) {
-    return renderError(res, 403, "You must be logged in to create short URLs.", "/login", user);
+    return renderError(
+      res,
+      403,
+      "You must be logged in to create short URLs.",
+      "/login",
+      user
+    );
   }
 
   const longURL = req.body.longURL; // Get the long URL from the form input
 
   if (!isValidURL(longURL)) {
-    return renderError(res, 400, "Invalid URL format. Please provide a valid URL.", "/urls", user);
+    return renderError(
+      res,
+      400,
+      "Invalid URL format. Please provide a valid URL.",
+      "/urls",
+      user
+    );
   }
 
-  const id = generateRandomString(); // Generate a unique short URL ID
+  const id = generateRandomString(urlDatabase); // Generate a unique short URL ID
   urlDatabase[id] = { longURL, userID: user.id }; // Store the long URL and userID with the generated ID
   res.redirect(`/urls/${id}`); // Redirect to the new short URL's page
 });
@@ -267,13 +261,25 @@ app.post("/urls/:id", (req, res) => {
 
   // Check if user is logged in
   if (!user || url.userID !== user.id) {
-    return renderError(res, 403, "You do not have permission to view this URL.", "/login", user);
+    return renderError(
+      res,
+      403,
+      "You do not have permission to view this URL.",
+      "/login",
+      user
+    );
   }
 
   // Validate the new URL
   const newLongURL = req.body.longURL;
   if (!isValidURL(newLongURL)) {
-    return renderError(res, 400, "Invalid URL format. Please provide a valid URL.", "/urls", user);
+    return renderError(
+      res,
+      400,
+      "Invalid URL format. Please provide a valid URL.",
+      "/urls",
+      user
+    );
   }
 
   // Update the long URL if validation passes
@@ -295,7 +301,13 @@ app.post("/urls/:id/delete", (req, res) => {
 
   // Check if user is logged in
   if (!user || url.userID !== user.id) {
-    return renderError(res, 403, "You do not have permission to delete this URL.", "/login", user);
+    return renderError(
+      res,
+      403,
+      "You do not have permission to delete this URL.",
+      "/login",
+      user
+    );
   }
 
   // Delete url entry
@@ -318,7 +330,13 @@ app.post("/login", (req, res) => {
 
   // Check if email and password are provided
   if (!email || !password) {
-    return renderError(res, 400, "Email and password must be provided.", "/login", null);
+    return renderError(
+      res,
+      400,
+      "Email and password must be provided.",
+      "/login",
+      null
+    );
   }
 
   // Find user by email
@@ -355,21 +373,39 @@ app.post("/register", (req, res) => {
 
   // Check for missing email or password fields
   if (!email || !password) {
-    return renderError(res, 400, "Email and password cannot be blank.", "/register", user);
+    return renderError(
+      res,
+      400,
+      "Email and password cannot be blank.",
+      "/register",
+      user
+    );
   }
 
   // Check if email is already registered
   if (getUserByEmail(email, users)) {
-    return renderError(res, 400, "Email is already registered.", "/register", user);
+    return renderError(
+      res,
+      400,
+      "Email is already registered.",
+      "/register",
+      user
+    );
   }
 
   // Check if password meets site requirements
   if (password.length < 8) {
-    return renderError(res, 400, "Password must be at least 8 characters long.", "/register", user);
+    return renderError(
+      res,
+      400,
+      "Password must be at least 8 characters long.",
+      "/register",
+      user
+    );
   }
 
   // Generate a unique ID for the new user
-  const userID = generateRandomString();
+  const userID = generateRandomString(urlDatabase);
 
   // Generate hashed password for user
   const hashedPassword = bcrypt.hashSync(password, SALT_ROUNDS);
