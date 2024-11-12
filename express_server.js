@@ -1,5 +1,6 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
+const bcrypt = require("bcrypt");
 const app = express();
 const PORT = 8080; // default port 8080
 
@@ -20,19 +21,28 @@ const urlDatabase = {
   },
 };
 
-// users object
+// To be cleaned/deleted prior to production
+// Testing plain-text passwords for example users
+const user1Password = "purple-monkey-dinosaur";
+const user2Password = "dishwasher-funk";
+
+// users object with placeholder for hashed passwords
 const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: null,
   },
   user2RandomID: {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk",
+    password: null,
   },
 };
+
+// Hash the passwords when the server starts
+users.userRandomID.password = bcrypt.hashSync(user1Password, 10);
+users.user2RandomID.password = bcrypt.hashSync(user2Password, 10);
 
 //// FUNCTIONS ////
 
@@ -351,7 +361,7 @@ app.post("/login", (req, res) => {
       errorCode: 400,
       message: "Email and password must be provided.",
       returnUrl: "/login",
-      user,
+      user: null,
     });
   }
 
@@ -359,12 +369,12 @@ app.post("/login", (req, res) => {
   const user = getUserByEmail(email);
 
   // Check if user exists and password matches
-  if (!user || user.password !== password) {
+  if (!user || !bcrypt.compareSync(password, user.password)) {
     return res.status(403).render("error", {
       errorCode: 403,
       message: "Invalid email or password.",
       returnUrl: "/login",
-      user,
+      user: null,
     });
   }
 
@@ -412,14 +422,27 @@ app.post("/register", (req, res) => {
     });
   }
 
+  // Check if password meets site requirements
+  if (password.length < 8) {
+    return res.status(400).render("error", {
+      errorCode: 400,
+      message: "Password must be at least 8 characters long.",
+      returnUrl: "/register",
+      user: null,
+    });
+  }
+
   // Generate a unique ID for the new user
   const userID = generateRandomString();
+
+  // Generate hashed password for user
+  const hashedPassword = bcrypt.hashSync(password, 10);
 
   // Create the new user object
   const newUser = {
     id: userID,
     email: email,
-    password: password,
+    password: hashedPassword,
   };
 
   // Add the new user to the users object
