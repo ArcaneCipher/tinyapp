@@ -98,6 +98,10 @@ TinyApp provides in-depth analytics for each URL:
 
 ```plaintext
 tinyapp/
+├── docs/ 
+│   ├── dashboard.png   # View of /urls showing all user URLs
+│   ├── details.png     # View of /urls:id short URL details
+│   ├── login.png       # View of /login screen
 ├── test/               # Testing using mocha/chai
 │   ├── helpersTest.js  # Tests for server Helper functions
 ├── views/              # EJS templates
@@ -132,6 +136,16 @@ tinyapp/
   - `bcrypt` for password hashing
 - **Analytics**:
   - Session cookies for tracking unique visitors
+
+---
+
+## Final Product
+
+!["Screenshot of Login page"](https://raw.githubusercontent.com/ArcaneCipher/tinyapp/refs/heads/main/docs/login.png)
+
+!["Screenshot of URLs page"](https://github.com/ArcaneCipher/tinyapp/blob/main/docs/dashboard.png?raw=true)
+
+!["Screenshot of URL details page"](https://github.com/ArcaneCipher/tinyapp/blob/main/docs/details.png?raw=true)
 
 ---
 
