@@ -115,6 +115,16 @@ const isValidURL = function (url) {
   }
 };
 
+// Helper function to render error pages
+const renderError = (res, errorCode, message, returnUrl, user) => {
+  res.status(errorCode).render("error", {
+    errorCode,
+    message,
+    returnUrl,
+    user,
+  });
+};
+
 //// GET ////
 
 // Route for root path - returns a simple greeting
@@ -138,12 +148,7 @@ app.get("/urls", (req, res) => {
 
   // Check if user is logged in
   if (!user) {
-    return res.status(403).render("error", {
-      errorCode: 403,
-      message: "You must be logged in to view your URLs.",
-      returnUrl: "/login",
-      user,
-    });
+    return renderError(res, 403, "You must be logged in to view your URLs.", "/login", user);
   }
 
   const userUrls = urlsForUser(user.id);
@@ -178,22 +183,12 @@ app.get("/urls/:id", (req, res) => {
 
   // Check if url is in urlDatabase
   if (!url) {
-    return res.status(404).render("error", {
-      errorCode: 404,
-      message: "Short URL not found.",
-      returnUrl: "/urls",
-      user,
-    });
+    return renderError(res, 404, "Short URL not found.", "/urls", user);
   }
 
   // Check if user is logged in and owns the URL
   if (!user || url.userID !== user.id) {
-    return res.status(403).render("error", {
-      errorCode: 403,
-      message: "You do not have permission to view this URL.",
-      returnUrl: "/login",
-      user,
-    });
+    return renderError(res, 403, "You do not have permission to view this URL.", "/login", user);
   }
 
   const templateVars = {
@@ -212,12 +207,7 @@ app.get("/u/:id", (req, res) => {
 
   // Check if url is in urlDatabase
   if (!longURL) {
-    return res.status(404).render("error", {
-      errorCode: 404,
-      message: "Short URL not found.",
-      returnUrl: "/urls",
-      user,
-    });
+    return renderError(res, 404, "Short URL not found.", "/urls", user);
   }
 
   // If the ID exists, redirect to the long URL
@@ -264,23 +254,13 @@ app.post("/urls", (req, res) => {
 
   // If user is logged in
   if (!user) {
-    return res.status(403).render("error", {
-      errorCode: 403,
-      message: "You must be logged in to create short URLs.",
-      returnUrl: "/login",
-      user,
-    });
+    return renderError(res, 403, "You must be logged in to create short URLs.", "/login", user);
   }
 
   const longURL = req.body.longURL; // Get the long URL from the form input
 
   if (!isValidURL(longURL)) {
-    return res.status(400).render("error", {
-      errorCode: 400,
-      message: "Invalid URL format. Please provide a valid URL.",
-      returnUrl: "/urls",
-      user,
-    });
+    return renderError(res, 400, "Invalid URL format. Please provide a valid URL.", "/urls", user);
   }
 
   const id = generateRandomString(); // Generate a unique short URL ID
@@ -295,33 +275,18 @@ app.post("/urls/:id", (req, res) => {
 
   // Check if url is in urlDatabase
   if (!url) {
-    return res.status(404).render("error", {
-      errorCode: 404,
-      message: "Short URL not found.",
-      returnUrl: "/urls",
-      user,
-    });
+    return renderError(res, 404, "Short URL not found.", "/urls", user);
   }
 
   // Check if user is logged in
   if (!user || url.userID !== user.id) {
-    return res.status(403).render("error", {
-      errorCode: 403,
-      message: "You do not have permission to view this URL.",
-      returnUrl: "/login",
-      user,
-    });
+    return renderError(res, 403, "You do not have permission to view this URL.", "/login", user);
   }
 
   // Validate the new URL
   const newLongURL = req.body.longURL;
   if (!isValidURL(newLongURL)) {
-    return res.status(400).render("error", {
-      errorCode: 400,
-      message: "Invalid URL format. Please provide a valid URL.",
-      returnUrl: "/urls",
-      user,
-    });
+    return renderError(res, 400, "Invalid URL format. Please provide a valid URL.", "/urls", user);
   }
 
   // Update the long URL if validation passes
@@ -338,22 +303,12 @@ app.post("/urls/:id/delete", (req, res) => {
 
   // Check if url is in urlDatabase
   if (!url) {
-    return res.status(404).render("error", {
-      errorCode: 404,
-      message: "Short URL not found.",
-      returnUrl: "/urls",
-      user,
-    });
+    return renderError(res, 404, "Short URL not found.", "/urls", user);
   }
 
   // Check if user is logged in
   if (!user || url.userID !== user.id) {
-    return res.status(403).render("error", {
-      errorCode: 403,
-      message: "You do not have permission to delete this URL.",
-      returnUrl: "/login",
-      user,
-    });
+    return renderError(res, 403, "You do not have permission to delete this URL.", "/login", user);
   }
 
   // Check if the short URL ID exists in the database
@@ -376,12 +331,7 @@ app.post("/login", (req, res) => {
 
   // Check if email and password are provided
   if (!email || !password) {
-    return res.status(400).render("error", {
-      errorCode: 400,
-      message: "Email and password must be provided.",
-      returnUrl: "/login",
-      user: null,
-    });
+    return renderError(res, 400, "Email and password must be provided.", "/login", null);
   }
 
   // Find user by email
@@ -389,12 +339,7 @@ app.post("/login", (req, res) => {
 
   // Check if user exists and password matches
   if (!user || !bcrypt.compareSync(password, user.password)) {
-    return res.status(403).render("error", {
-      errorCode: 403,
-      message: "Invalid email or password.",
-      returnUrl: "/login",
-      user: null,
-    });
+    return renderError(res, 403, "Invalid email or password.", "/login", null);
   }
 
   // Set a cookie with the user's ID
@@ -423,32 +368,17 @@ app.post("/register", (req, res) => {
 
   // Check for missing email or password fields
   if (!email || !password) {
-    return res.status(400).render("error", {
-      errorCode: 400,
-      message: "Email and password cannot be blank.",
-      returnUrl: "/register",
-      user,
-    });
+    return renderError(res, 400, "Email and password cannot be blank.", "/register", user);
   }
 
   // Check if email is already registered
   if (getUserByEmail(email)) {
-    return res.status(400).render("error", {
-      errorCode: 400,
-      message: "Email is already registered.",
-      returnUrl: "/register",
-      user,
-    });
+    return renderError(res, 400, "Email is already registered.", "/register", user);
   }
 
   // Check if password meets site requirements
   if (password.length < 8) {
-    return res.status(400).render("error", {
-      errorCode: 400,
-      message: "Password must be at least 8 characters long.",
-      returnUrl: "/register",
-      user: null,
-    });
+    return renderError(res, 400, "Password must be at least 8 characters long.", "/register", user);
   }
 
   // Generate a unique ID for the new user
