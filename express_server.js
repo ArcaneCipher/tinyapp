@@ -1,5 +1,5 @@
 const express = require("express");
-const methodOverride = require('method-override')
+const methodOverride = require("method-override");
 const cookieSession = require("cookie-session");
 const bcrypt = require("bcrypt");
 const app = express();
@@ -23,7 +23,7 @@ app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 
 // Middleware to enable support for PUT and DELETE methods
-app.use(methodOverride('_method'));
+app.use(methodOverride("_method"));
 
 // Middleware to encrypt and manage cookies
 app.use(
@@ -48,11 +48,15 @@ const urlDatabase = {
     longURL: "https://www.tsn.ca",
     userID: "userRandomID",
     visitCount: 0,
+    uniqueVisitors: {},
+    visitLog: [],
   },
   i3BoGr: {
     longURL: "https://www.google.ca",
     userID: "userRandomID",
     visitCount: 0,
+    uniqueVisitors: {},
+    visitLog: [],
   },
 };
 
@@ -162,14 +166,34 @@ app.get("/u/:id", (req, res) => {
   const user = getUserFromCookie(req, users);
   const urlEntry = urlDatabase[req.params.id]; // Retrieve the long URL from urlDatabase
 
-  // Check if url is in urlDatabase
+  // Check if urlEntry exists
   if (!urlEntry) {
-    return renderError(res, 404, "Short URL not found.", "/urls", user);
+    return renderError(res, 404, "Short URL not found.", "/urls", null);
   }
 
-  urlEntry.visitCount += 1; // Increment visit count
-  
-  res.redirect(urlEntry.longURL); // If the ID exists, redirect to the long URL
+  // Increment visit count
+  urlEntry.visitCount += 1;
+
+  // Assign a visitorID to the session if not already set
+  if (!req.session.visitor_id) {
+    req.session.visitor_id = generateRandomString(urlEntry.uniqueVisitors);
+  }  
+
+  const visitorID = req.session.visitor_id;
+
+  // Track unique visitors using an object
+  if (!urlEntry.uniqueVisitors[visitorID]) {
+    urlEntry.uniqueVisitors[visitorID] = true;
+  }
+
+  // Log the visit
+  urlEntry.visitLog.push({
+    timestamp: new Date().toISOString(),
+    visitorID: visitorID,
+  });
+
+  // Redirect to the long URL
+  res.redirect(urlEntry.longURL);
 });
 
 // Route to render the registration page
@@ -235,11 +259,13 @@ app.post("/urls", (req, res) => {
 
   const id = generateRandomString(urlDatabase); // Generate a unique short URL ID
   // Store the long URL and userID with the generated ID
-  urlDatabase[id] = { 
+  urlDatabase[id] = {
     longURL,
     userID: user.id,
     visitCount: 0,
-  }; 
+    uniqueVisitors: {},
+    visitLog: [],
+  };
   res.redirect(`/urls/${id}`); // Redirect to the new short URL's page
 });
 

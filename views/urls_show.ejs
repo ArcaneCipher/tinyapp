@@ -13,7 +13,7 @@
       integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS"
       crossorigin="anonymous"
     />
-    <title>TinyApp - Show URL</title>
+    <title>TinyApp - URL Details</title>
   </head>
   <body>
     <!-- Include the header -->
@@ -25,13 +25,24 @@
           <p class="card-text">
             Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
           </p>
-          <p>
-            Total Visits: <%= url.visitCount %>
-          </p>
+          <p><strong>Total Visits:</strong> <%= url.visitCount || 0 %></p>
+          <p><strong>Unique Visitors:</strong> <%= url.uniqueVisitors.size %></p>
+          <h4>Visit Log</h4>
+          <ul class="list-group">
+            <% url.visitLog.forEach(log => { %>
+              <li class="list-group-item">
+                Visitor: <%= log.visitorID %>, Time: <%= log.timestamp %>
+              </li>
+            <% }) %>
+          </ul>
         </div>
         <div class="card-footer text-muted">
-          <h3>Edit</h3>
-          <form class="form-inline" action="/urls/<%= id %>?_method=PUT" method="POST">
+          <h3>Edit URL</h3>
+          <form
+            class="form-inline"
+            action="/urls/<%= id %>?_method=PUT"
+            method="POST"
+          >
             <div class="form-group mb-2">
               <label for="longURL">New URL:</label>
               <input
@@ -56,7 +67,7 @@
     ></script>
     <script
       src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
-      integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+      integrity="sha384-UO2eT0CpHqdSJQ6HJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
       crossorigin="anonymous"
     ></script>
     <script
