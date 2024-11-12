@@ -203,12 +203,14 @@ app.get("/urls/:id", (req, res) => {
 // Route to handle redirection for short URLs
 app.get("/u/:id", (req, res) => {
   const user = getUserFromCookie(req);
-  const longURL = urlDatabase[req.params.id]; // Retrieve the long URL from urlDatabase
+  const urlEntry  = urlDatabase[req.params.id]; // Retrieve the long URL from urlDatabase
 
   // Check if url is in urlDatabase
-  if (!longURL) {
+  if (!urlEntry ) {
     return renderError(res, 404, "Short URL not found.", "/urls", user);
   }
+
+  const longURL = urlEntry.longURL; // Extract the long URL
 
   // If the ID exists, redirect to the long URL
   res.redirect(longURL);
@@ -311,7 +313,7 @@ app.post("/urls/:id/delete", (req, res) => {
     return renderError(res, 403, "You do not have permission to delete this URL.", "/login", user);
   }
 
-  // Check if the short URL ID exists in the database
+  // Delete url entry
   delete urlDatabase[req.params.id];
 
   // Redirect back to the main URLs page after deletion
