@@ -87,9 +87,9 @@ app.get("/", (req, res) => {
 });
 
 // Route to return urlDatabase as JSON (optional)
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
+// app.get("/urls.json", (req, res) => {
+//   res.json(urlDatabase);
+// });
 
 // Route to display all URLs in the urlDatabase
 app.get("/urls", (req, res) => {
