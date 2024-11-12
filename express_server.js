@@ -5,6 +5,11 @@ const app = express();
 const PORT = 8080; // default port 8080
 const SALT_ROUNDS = 10; // bcrypt salt rounds as a constant
 
+// Import helper functions
+const {
+  getUserByEmail,
+} = require("./helpers");
+
 // Set EJS as the templating engine
 app.set("view engine", "ejs");
 
@@ -40,28 +45,19 @@ const urlDatabase = {
   },
 };
 
-// To be cleaned/deleted prior to production
-// Testing plain-text passwords for example users
-const user1Password = "purple-monkey-dinosaur";
-const user2Password = "dishwasher-funk";
-
 // users object with placeholder for hashed passwords
 const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: null,
+    password: bcrypt.hashSync("purple-monkey-dinosaur", SALT_ROUNDS),
   },
   user2RandomID: {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: null,
+    password: bcrypt.hashSync("dishwasher-funk", SALT_ROUNDS),
   },
 };
-
-// Hash the passwords when the server starts
-users.userRandomID.password = bcrypt.hashSync(user1Password, SALT_ROUNDS);
-users.user2RandomID.password = bcrypt.hashSync(user2Password, SALT_ROUNDS);
 
 //// FUNCTIONS ////
 
@@ -81,17 +77,6 @@ const generateRandomString = function () {
 const getUserFromCookie = function (req) {
   const userId = req.session.user_id;
   return users[userId] || null; // Explicitly return null if the user_id is not found
-};
-
-// Helper function to find a user by email
-const getUserByEmail = function (email) {
-  for (const userId in users) {
-    const user = users[userId];
-    if (user.email === email) {
-      return user;
-    }
-  }
-  return null;
 };
 
 // Helper function: Filter URLs by user ID
@@ -337,7 +322,7 @@ app.post("/login", (req, res) => {
   }
 
   // Find user by email
-  const user = getUserByEmail(email);
+  const user = getUserByEmail(email, users);
 
   // Check if user exists and password matches
   if (!user || !bcrypt.compareSync(password, user.password)) {
@@ -374,7 +359,7 @@ app.post("/register", (req, res) => {
   }
 
   // Check if email is already registered
-  if (getUserByEmail(email)) {
+  if (getUserByEmail(email, users)) {
     return renderError(res, 400, "Email is already registered.", "/register", user);
   }
 
