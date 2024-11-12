@@ -163,7 +163,6 @@ app.get("/urls/:id", (req, res) => {
 
 // Route to handle redirection for short URLs
 app.get("/u/:id", (req, res) => {
-  const user = getUserFromCookie(req, users);
   const urlEntry = urlDatabase[req.params.id]; // Retrieve the long URL from urlDatabase
 
   // Check if urlEntry exists
