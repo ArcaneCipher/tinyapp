@@ -109,6 +109,7 @@ tinyapp/
 │   ├── login.ejs       # Login form
 │   ├── register.ejs    # Registration form
 │   ├── error.ejs       # Clean HTML error page
+├── .gitignore          # gitignore to ignore node_modules
 ├── helpers.js          # Helper functions for the server
 ├── express_server.js   # Main server file
 ├── package.json        # Dependencies and scripts
