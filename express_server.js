@@ -3,6 +3,7 @@ const cookieParser = require("cookie-parser");
 const bcrypt = require("bcrypt");
 const app = express();
 const PORT = 8080; // default port 8080
+const SALT_ROUNDS = 10; // bcrypt salt rounds as a constant
 
 app.set("view engine", "ejs"); // Set EJS as the templating engine
 
@@ -41,8 +42,8 @@ const users = {
 };
 
 // Hash the passwords when the server starts
-users.userRandomID.password = bcrypt.hashSync(user1Password, 10);
-users.user2RandomID.password = bcrypt.hashSync(user2Password, 10);
+users.userRandomID.password = bcrypt.hashSync(user1Password, SALT_ROUNDS);
+users.user2RandomID.password = bcrypt.hashSync(user2Password, SALT_ROUNDS);
 
 //// FUNCTIONS ////
 
@@ -436,7 +437,7 @@ app.post("/register", (req, res) => {
   const userID = generateRandomString();
 
   // Generate hashed password for user
-  const hashedPassword = bcrypt.hashSync(password, 10);
+  const hashedPassword = bcrypt.hashSync(password, SALT_ROUNDS);
 
   // Create the new user object
   const newUser = {
